@@ -28,6 +28,7 @@ function OptionsModule(_channel) {
         password: false,           // Channel password (false -> no password required for entry)
         allow_dupes: false,        // Allow duplicate videos on the playlist
         torbanned: false,          // Block connections from Tor exit nodes
+	allow_anon_chat: true, 	   // Disables guest loggin for anonymous posting
         block_anonymous_users: false, //Only allow connections from registered users.
         allow_ascii_control: false,// Allow ASCII control characters (\x00-\x1f)
         playlist_max_per_user: 0,  // Maximum number of playlist items per user
@@ -331,6 +332,11 @@ OptionsModule.prototype.handleSetOptions = function (user, data) {
 
     if ("torbanned" in data && user.account.effectiveRank >= 3) {
         this.opts.torbanned = Boolean(data.torbanned);
+        sendUpdate = true;
+    }
+
+    if("allow_anon_chat" in data && user.account.effectiveRank >=3){
+        this.opts.allow_anon_chat = Boolean(data.allow_anon_chat);
         sendUpdate = true;
     }
 

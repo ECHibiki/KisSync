@@ -360,7 +360,7 @@ var lastguestlogin = {};
 User.prototype.guestLogin = function (name) {
     var self = this;
 
-    if (self.realip in lastguestlogin) {
+    if (!self.channel.modules.options.get("allow_anon_chat") && self.realip in lastguestlogin) {
         var diff = (Date.now() - lastguestlogin[self.realip]) / 1000;
         if (diff < Config.get("guest-login-delay")) {
             self.socket.emit("login", {
@@ -381,7 +381,7 @@ User.prototype.guestLogin = function (name) {
         return;
     }
 
-    if (name.match(Config.get("reserved-names.usernames"))) {
+    if (!self.channel.modules.options.get("allow_anon_chat") && name.match(Config.get("reserved-names.usernames"))) {
         LOGGER.warn(
             'Rejecting attempt by %s to use reserved username "%s"',
             self.realip,
@@ -414,7 +414,7 @@ User.prototype.guestLogin = function (name) {
             return;
         }
 
-        if (self.inChannel()) {
+        if (!self.channel.modules.options.get("allow_anon_chat") && self.inChannel()) {
             var nameLower = name.toLowerCase();
             for (var i = 0; i < self.channel.users.length; i++) {
                 if (self.channel.users[i].getLowerName() === nameLower) {
@@ -426,7 +426,6 @@ User.prototype.guestLogin = function (name) {
                 }
             }
         }
-
         // Login succeeded
         lastguestlogin[self.realip] = Date.now();
 
