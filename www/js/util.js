@@ -961,7 +961,6 @@ function handleModPermissions() {
     $("#cs-allow_voteskip").prop("checked", CHANNEL.opts.allow_voteskip);
     $("#cs-voteskip_ratio").val(CHANNEL.opts.voteskip_ratio);
     $("#cs-allow_dupes").prop("checked", CHANNEL.opts.allow_dupes);
-    $("#cs-allow_anon_chat").prop("checked", CHANNEL.opts.allow_anon_chat);
     $("#cs-torbanned").prop("checked", CHANNEL.opts.torbanned);
     $("#cs-block_anonymous_users").prop("checked", CHANNEL.opts.block_anonymous_users);
     $("#cs-allow_ascii_control").prop("checked", CHANNEL.opts.allow_ascii_control);
@@ -1581,7 +1580,15 @@ function formatChatMessage(data, last) {
     if (!skip) {
         name.appendTo(div);
     }
-    $("<strong/>").addClass("username").text(data.username + ": ").appendTo(name);
+	var anonized_username = data.username;
+	var anon_patt = new RegExp("^Anonymous-[a-zA-Z0-9]*$");
+	if(CLIENT.rank < 2 && anon_patt.test(data.username)){
+		anonized_username = data.username.split("-")[0];
+		$("<strong/>").addClass("username").text(anonized_username + ": ").appendTo(name);
+	}
+	else{
+		$("<strong/>").addClass("username").text(data.username + ": ").appendTo(name);
+	}
     if (data.meta.modflair) {
         name.addClass(getNameColor(data.meta.modflair));
     }
