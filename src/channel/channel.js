@@ -14,7 +14,7 @@ const LOGGER = require('@calzoneman/jsli')('channel');
 
 const USERCOUNT_THROTTLE = 10000;
 
-class ReferenceCounter {
+let ReferenceCounter = class ReferenceCounter {
     constructor(channel) {
         this.channel = channel;
         this.channelName = channel.name;
@@ -42,9 +42,7 @@ class ReferenceCounter {
                     delete this.references[caller];
                 }
             } else {
-                LOGGER.error("ReferenceCounter::unref() called by caller [" +
-                        caller + "] but this caller had no active references! " +
-                        `(channel: ${this.channelName})`);
+                LOGGER.error("ReferenceCounter::unref() called by caller [" + caller + "] but this caller had no active references! " + `(channel: ${this.channelName})`);
                 return;
             }
         }
@@ -56,40 +54,32 @@ class ReferenceCounter {
     checkRefCount() {
         if (this.refCount === 0) {
             if (Object.keys(this.references).length > 0) {
-                LOGGER.error("ReferenceCounter::refCount reached 0 but still had " +
-                        "active references: " +
-                        JSON.stringify(Object.keys(this.references)) +
-                        ` (channel: ${this.channelName})`);
+                LOGGER.error("ReferenceCounter::refCount reached 0 but still had " + "active references: " + JSON.stringify(Object.keys(this.references)) + ` (channel: ${this.channelName})`);
                 for (var caller in this.references) {
                     this.refCount += this.references[caller];
                 }
             } else if (this.channel.users && this.channel.users.length > 0) {
-                LOGGER.error("ReferenceCounter::refCount reached 0 but still had " +
-                        this.channel.users.length + " active users" +
-                        ` (channel: ${this.channelName})`);
+                LOGGER.error("ReferenceCounter::refCount reached 0 but still had " + this.channel.users.length + " active users" + ` (channel: ${this.channelName})`);
                 this.refCount = this.channel.users.length;
             } else {
                 this.channel.emit("empty");
             }
         }
     }
-}
+};
+
 
 function Channel(name) {
     this.name = name;
     this.uniqueName = name.toLowerCase();
     this.modules = {};
-    this.logger = new Logger.Logger(
-        path.join(
-            __dirname, "..", "..", "chanlogs", this.uniqueName + ".log"
-        )
-    );
+    this.logger = new _logger2.default.Logger(path.join(__dirname, "..", "..", "chanlogs", this.uniqueName + ".log"));
     this.users = [];
     this.refCounter = new ReferenceCounter(this);
     this.flags = 0;
     this.id = 0;
     this.ownerName = null;
-    this.broadcastUsercount = throttle(() => {
+    this.broadcastUsercount = (0, _throttle.throttle)(() => {
         this.broadcastAll("usercount", this.users.length);
     }, USERCOUNT_THROTTLE);
     const self = this;
@@ -105,7 +95,7 @@ function Channel(name) {
     });
 }
 
-Channel.prototype = Object.create(EventEmitter.prototype);
+Channel.prototype = Object.create(_events.EventEmitter.prototype);
 
 Channel.prototype.is = function (flag) {
     return Boolean(this.flags & flag);
@@ -144,23 +134,23 @@ Channel.prototype.moderators = function () {
 
 Channel.prototype.initModules = function () {
     const modules = {
-        "./permissions"   : "permissions",
-        "./emotes"        : "emotes",
-        "./chat"          : "chat",
-        "./drink"         : "drink",
-        "./filters"       : "filters",
-        "./customization" : "customization",
-        "./opts"          : "options",
-        "./library"       : "library",
-        "./playlist"      : "playlist",
+        "./permissions": "permissions",
+        "./emotes": "emotes",
+        "./chat": "chat",
+        "./drink": "drink",
+        "./filters": "filters",
+        "./customization": "customization",
+        "./opts": "options",
+        "./library": "library",
+        "./playlist": "playlist",
         "./mediarefresher": "mediarefresher",
-        "./voteskip"      : "voteskip",
-        "./poll"          : "poll",
-        "./kickban"       : "kickban",
-        "./ranks"         : "rank",
-        "./accesscontrol" : "password",
+        "./voteskip": "voteskip",
+        "./poll": "poll",
+        "./kickban": "kickban",
+        "./ranks": "rank",
+        "./accesscontrol": "password",
         "./anonymouscheck": "anoncheck",
-	"./anonymouspost" : "anonpost"
+        "./anonymouspost": "anonpost"
     };
 
     var self = this;
@@ -203,8 +193,7 @@ Channel.prototype.loadState = function () {
     const self = this;
     function errorLoad(msg, suggestTryAgain = true) {
         const extra = suggestTryAgain ? "  Please try again later." : "";
-        self.emit("loadFail", "Failed to load channel data from the database: " +
-                msg + extra);
+        self.emit("loadFail", "Failed to load channel data from the database: " + msg + extra);
         self.setFlag(Flags.C_ERROR);
     }
 
@@ -213,16 +202,13 @@ Channel.prototype.loadState = function () {
             try {
                 this.modules[m].load(data);
             } catch (e) {
-                LOGGER.error("Failed to load module " + m + " for channel " +
-                        this.uniqueName);
+                LOGGER.error("Failed to load module " + m + " for channel " + this.uniqueName);
             }
         });
 
         this.setFlag(Flags.C_READY);
-    }).catch(ChannelStateSizeError, err => {
-        const message = "This channel's state size has exceeded the memory limit " +
-                "enforced by this server.  Please contact an administrator " +
-                "for assistance.";
+    }).catch(_errors.ChannelStateSizeError, err => {
+        const message = "This channel's state size has exceeded the memory limit " + "enforced by this server.  Please contact an administrator " + "for assistance.";
 
         LOGGER.error(err.stack);
         errorLoad(message, false);
@@ -234,9 +220,7 @@ Channel.prototype.loadState = function () {
             this.setFlag(Flags.C_READY);
             return;
         } else {
-            const message = "An error occurred when loading this channel's data from " +
-                    "disk.  Please contact an administrator for assistance.  " +
-                    `The error was: ${err}.`;
+            const message = "An error occurred when loading this channel's data from " + "disk.  Please contact an administrator for assistance.  " + `The error was: ${err}.`;
 
             LOGGER.error(err.stack);
             errorLoad(message);
@@ -248,10 +232,7 @@ Channel.prototype.saveState = async function () {
     if (!this.is(Flags.C_REGISTERED)) {
         return;
     } else if (!this.is(Flags.C_READY)) {
-        throw new Error(
-            `Attempted to save channel ${this.name} ` +
-            `but it wasn't finished loading yet!`
-        );
+        throw new Error(`Attempted to save channel ${this.name} ` + `but it wasn't finished loading yet!`);
     }
 
     if (this.is(Flags.C_ERROR)) {
@@ -262,17 +243,10 @@ Channel.prototype.saveState = async function () {
 
     const data = {};
     Object.keys(this.modules).forEach(m => {
-        if (
-            this.modules[m].dirty ||
-            !this.modules[m].supportsDirtyCheck
-        ) {
+        if (this.modules[m].dirty || !this.modules[m].supportsDirtyCheck) {
             this.modules[m].save(data);
         } else {
-            LOGGER.debug(
-                "Skipping save for %s[%s]: not dirty",
-                this.uniqueName,
-                m
-            );
+            LOGGER.debug("Skipping save for %s[%s]: not dirty", this.uniqueName, m);
         }
     });
 
@@ -283,7 +257,7 @@ Channel.prototype.saveState = async function () {
             this.modules[m].dirty = false;
         });
     } catch (error) {
-        if (error instanceof ChannelStateSizeError) {
+        if (error instanceof _errors.ChannelStateSizeError) {
             this.users.forEach(u => {
                 if (u.account.effectiveRank >= 2) {
                     u.socket.emit("warnLargeChandump", {
@@ -323,14 +297,7 @@ Channel.prototype.checkModules = function (fn, args, cb) {
             }
 
             if (!self.modules) {
-                LOGGER.warn(
-                    'checkModules(%s): self.modules is undefined; dead=%s,' +
-                    ' current=%s, remaining=%s',
-                    fn,
-                    self.dead,
-                    m,
-                    keys
-                );
+                LOGGER.warn('checkModules(%s): self.modules is undefined; dead=%s,' + ' current=%s, remaining=%s', fn, self.dead, m, keys);
                 return;
             }
 
@@ -356,7 +323,7 @@ Channel.prototype.notifyModules = function (fn, args) {
 
 Channel.prototype.joinUser = function (user, data) {
     const self = this;
-
+		console.log("Ju1")
     self.refCounter.ref("Channel::user");
     self.waitFlag(Flags.C_READY, function () {
 
@@ -365,20 +332,20 @@ Channel.prototype.joinUser = function (user, data) {
             self.refCounter.unref("Channel::user");
             return;
         }
-
+console.log("Ju2")
         user.channel = self;
+		
         user.waitFlag(Flags.U_LOGGED_IN, () => {
             if (self.dead) {
-                LOGGER.warn(
-                    'Got U_LOGGED_IN for %s after channel already unloaded',
-                    user.getName()
-                );
+                LOGGER.warn('Got U_LOGGED_IN for %s after channel already unloaded', user.getName());
                 return;
             }
-
+console.log("Ju3")
             if (user.is(Flags.U_REGISTERED)) {
+				console.log("g");
                 db.channels.getRank(self.name, user.getName(), (error, rank) => {
                     if (!error) {
+						console.log("Ju3.5")
                         user.setChannelRank(rank);
                         user.setFlag(Flags.U_HAS_CHANNEL_RANK);
                         if (user.inChannel()) {
@@ -391,14 +358,16 @@ Channel.prototype.joinUser = function (user, data) {
                 });
             }
         });
-
+console.log("Ju4")
         if (user.socket.disconnected) {
             self.refCounter.unref("Channel::user");
+			console.log("Ju41")
             return;
         } else if (self.dead) {
+			console.log("Ju42")
             return;
         }
-
+		console.log("Ju43")
         self.checkModules("onUserPreJoin", [user, data], function (err, result) {
             if (result === ChannelModule.PASSTHROUGH) {
                 user.channel = self;
@@ -423,32 +392,27 @@ Channel.prototype.acceptUser = function (user) {
     if (user.socket.context.torConnection) {
         if (this.modules.options && this.modules.options.get("torbanned")) {
             user.kick("This channel has banned connections from Tor.");
-            this.logger.log("[login] Blocked connection from Tor exit at " +
-                            user.displayip);
+            this.logger.log("[login] Blocked connection from Tor exit at " + user.displayip);
             return;
         }
 
-        this.logger.log("[login] Accepted connection from Tor exit at " +
-                        user.displayip);
+        this.logger.log("[login] Accepted connection from Tor exit at " + user.displayip);
     } else {
         this.logger.log("[login] Accepted connection from " + user.displayip);
     }
 
     var self = this;
     user.waitFlag(Flags.U_LOGGED_IN, function () {
-	if(!self.modules.options.get("allow_anon_chat")){
-	    for (var i = 0; i < self.users.length; i++) {
-	        if (self.users[i] !== user &&
-	            self.users[i].getLowerName() === user.getLowerName()) {
-	            self.users[i].kick("Duplicate login");
-	        }
-	    }
-	}
-        else{
+        if (!self.modules.options.get("allow_anon_chat")) {
             for (var i = 0; i < self.users.length; i++) {
-                if (self.users[i] !== user &&
-			self.users[i].realip == user.realip) {
-                   self.users[i].kick("Duplicate login");
+                if (self.users[i] !== user && self.users[i].getLowerName() === user.getLowerName()) {
+                    self.users[i].kick("Duplicate login");
+                }
+            }
+        } else {
+            for (var i = 0; i < self.users.length; i++) {
+                if (self.users[i] !== user && self.users[i].realip == user.realip) {
+                    self.users[i].kick("Duplicate login");
                 }
             }
         }
@@ -476,7 +440,7 @@ Channel.prototype.acceptUser = function (user) {
         user.socket.emit("channelNotRegistered");
     }
 
-    user.on('afk', function(afk){
+    user.on('afk', function (afk) {
         self.sendUserMeta(self.users, user);
         // TODO: Drop legacy setAFK frame after a few months
         self.broadcastAll("setAFK", { name: user.getName(), afk: afk });
@@ -492,8 +456,7 @@ Channel.prototype.partUser = function (user) {
         return;
     }
 
-    this.logger.log("[login] " + user.displayip + " (" + user.getName() + ") " +
-                    "disconnected.");
+    this.logger.log("[login] " + user.displayip + " (" + user.getName() + ") " + "disconnected.");
     user.channel = null;
     /* Should be unnecessary because partUser only occurs if the socket dies */
     user.clearFlag(Flags.U_IN_CHANNEL);
@@ -518,10 +481,7 @@ Channel.prototype.partUser = function (user) {
 };
 
 Channel.prototype.maybeResendUserlist = function maybeResendUserlist(user, newRank, oldRank) {
-    if ((newRank >= 2 && oldRank < 2)
-            || (newRank < 2 && oldRank >= 2)
-            || (newRank >= 255 && oldRank < 255)
-            || (newRank < 255 && oldRank >= 255)) {
+    if (newRank >= 2 && oldRank < 2 || newRank < 2 && oldRank >= 2 || newRank >= 255 && oldRank < 255 || newRank < 255 && oldRank >= 255) {
         this.sendUserlist([user]);
     }
 };
@@ -576,7 +536,7 @@ Channel.prototype.sendUserMeta = function (users, user, minrank) {
     users.filter(function (u) {
         return typeof minrank !== "number" || u.account.effectiveRank > minrank;
     }).forEach(function (u) {
-        if (u.account.globalRank >= 255)  {
+        if (u.account.globalRank >= 255) {
             u.socket.emit("setUserMeta", {
                 name: user.getName(),
                 meta: userdata.sadmin.meta
@@ -668,8 +628,7 @@ Channel.prototype.sendUserJoin = function (users, user) {
         }
     });
 
-    self.modules.chat.sendModMessage(user.getName() + " joined (aliases: " +
-                                     user.account.aliases.join(",") + ")", 2);
+    self.modules.chat.sendModMessage(user.getName() + " joined (aliases: " + user.account.aliases.join(",") + ")", 2);
 };
 
 Channel.prototype.readLog = function (cb) {

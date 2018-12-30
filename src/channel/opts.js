@@ -10,29 +10,29 @@ function realTypeOf(thing) {
 function OptionsModule(_channel) {
     ChannelModule.apply(this, arguments);
     this.opts = {
-        allow_voteskip: true,      // Allow users to voteskip
-        voteskip_ratio: 0.5,       // Ratio of skip votes:non-afk users needed to skip the video
-        afk_timeout: 600,          // Number of seconds before a user is automatically marked afk
+        allow_voteskip: true, // Allow users to voteskip
+        voteskip_ratio: 0.5, // Ratio of skip votes:non-afk users needed to skip the video
+        afk_timeout: 600, // Number of seconds before a user is automatically marked afk
         pagetitle: this.channel.name, // Title of the browser tab
-        maxlength: 0,              // Maximum length (in seconds) of a video queued
-        externalcss: "",           // Link to external stylesheet
-        externaljs: "",            // Link to external script
-        chat_antiflood: false,     // Throttle chat messages
+        maxlength: 0, // Maximum length (in seconds) of a video queued
+        externalcss: "", // Link to external stylesheet
+        externaljs: "", // Link to external script
+        chat_antiflood: false, // Throttle chat messages
         chat_antiflood_params: {
-            burst: 4,              // Number of messages to allow with no throttling
-            sustained: 1,          // Throttle rate (messages/second)
-            cooldown: 4            // Number of seconds with no messages before burst is reset
+            burst: 4, // Number of messages to allow with no throttling
+            sustained: 1, // Throttle rate (messages/second)
+            cooldown: 4 // Number of seconds with no messages before burst is reset
         },
-        show_public: false,        // List the channel on the index page
-        enable_link_regex: true,   // Use the built-in link filter
-        password: false,           // Channel password (false -> no password required for entry)
-        allow_dupes: false,        // Allow duplicate videos on the playlist
-        torbanned: false,          // Block connections from Tor exit nodes
-	allow_anon_chat: true, 	   // Disables guest loggin for anonymous posting
+        show_public: false, // List the channel on the index page
+        enable_link_regex: true, // Use the built-in link filter
+        password: false, // Channel password (false -> no password required for entry)
+        allow_dupes: false, // Allow duplicate videos on the playlist
+        torbanned: false, // Block connections from Tor exit nodes
+        allow_anon_chat: true, // Disables guest loggin for anonymous posting
         block_anonymous_users: false, //Only allow connections from registered users.
-        allow_ascii_control: false,// Allow ASCII control characters (\x00-\x1f)
-        playlist_max_per_user: 0,  // Maximum number of playlist items per user
-        new_user_chat_delay: 0,      // Minimum account/IP age to chat
+        allow_ascii_control: false, // Allow ASCII control characters (\x00-\x1f)
+        playlist_max_per_user: 0, // Maximum number of playlist items per user
+        new_user_chat_delay: 0, // Minimum account/IP age to chat
         new_user_chat_link_delay: 0, // Minimum account/IP age to post links
         playlist_max_duration_per_user: 0 // Maximum total playlist time per user
     };
@@ -52,14 +52,8 @@ OptionsModule.prototype.load = function (data) {
     }
 
     this.opts.pagetitle = unzalgo(this.opts.pagetitle);
-    this.opts.chat_antiflood_params.burst = Math.min(
-        20,
-        this.opts.chat_antiflood_params.burst
-    );
-    this.opts.chat_antiflood_params.sustained = Math.min(
-        10,
-        this.opts.chat_antiflood_params.sustained
-    );
+    this.opts.chat_antiflood_params.burst = Math.min(20, this.opts.chat_antiflood_params.burst);
+    this.opts.chat_antiflood_params.sustained = Math.min(10, this.opts.chat_antiflood_params.sustained);
     this.dirty = false;
 };
 
@@ -155,7 +149,7 @@ OptionsModule.prototype.handleSetOptions = function (user, data) {
     }
 
     if ("pagetitle" in data && user.account.effectiveRank >= 3) {
-        var title = unzalgo((""+data.pagetitle).substring(0, 100));
+        var title = unzalgo(("" + data.pagetitle).substring(0, 100));
         if (!title.trim().match(Config.get("reserved-names.pagetitles"))) {
             this.opts.pagetitle = title;
             sendUpdate = true;
@@ -199,14 +193,13 @@ OptionsModule.prototype.handleSetOptions = function (user, data) {
         if (typeof data.externalcss !== "string") {
             user.socket.emit("validationError", {
                 target: "#cs-externalcss",
-                message: prefix + "URL must be a string, not "
-                        + realTypeOf(data.externalcss)
+                message: prefix + "URL must be a string, not " + realTypeOf(data.externalcss)
             });
         }
 
         var link = data.externalcss.substring(0, 255).trim();
         if (!link) {
-            sendUpdate = (this.opts.externalcss !== "");
+            sendUpdate = this.opts.externalcss !== "";
             this.opts.externalcss = "";
             user.socket.emit("validationPassed", {
                 target: "#cs-externalcss"
@@ -238,14 +231,13 @@ OptionsModule.prototype.handleSetOptions = function (user, data) {
         if (typeof data.externaljs !== "string") {
             user.socket.emit("validationError", {
                 target: "#cs-externaljs",
-                message: prefix + "URL must be a string, not "
-                        + realTypeOf(data.externaljs)
+                message: prefix + "URL must be a string, not " + realTypeOf(data.externaljs)
             });
         }
 
         const link = data.externaljs.substring(0, 255).trim();
         if (!link) {
-            sendUpdate = (this.opts.externaljs !== "");
+            sendUpdate = this.opts.externaljs !== "";
             this.opts.externaljs = "";
             user.socket.emit("validationPassed", {
                 target: "#cs-externaljs"
@@ -335,12 +327,12 @@ OptionsModule.prototype.handleSetOptions = function (user, data) {
         sendUpdate = true;
     }
 
-    if("allow_anon_chat" in data && user.account.effectiveRank >=3){
+    if ("allow_anon_chat" in data && user.account.effectiveRank >= 3) {
         this.opts.allow_anon_chat = Boolean(data.allow_anon_chat);
         sendUpdate = true;
     }
 
-    if("block_anonymous_users" in data && user.account.effectiveRank >=3){
+    if ("block_anonymous_users" in data && user.account.effectiveRank >= 3) {
         this.opts.block_anonymous_users = Boolean(data.block_anonymous_users);
         sendUpdate = true;
     }
@@ -392,3 +384,4 @@ function unzalgo(text) {
 }
 
 module.exports = OptionsModule;
+//# sourceMappingURL=opts.js.map
