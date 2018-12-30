@@ -13,8 +13,6 @@ function makeid() {
   return text;
 }
 
-console.log(makeid());
-
 function AnonymousPost(_channel) {
     ChannelModule.apply(this, arguments);
 }
