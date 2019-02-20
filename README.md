@@ -1,3 +1,7 @@
+### KisSync
+
+KisSync adds anon posting to Sync's default features
+
 CyTube
 ======
 
