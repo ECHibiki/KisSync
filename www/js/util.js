@@ -963,6 +963,7 @@ function handleModPermissions() {
     $("#cs-allow_dupes").prop("checked", CHANNEL.opts.allow_dupes);
     $("#cs-torbanned").prop("checked", CHANNEL.opts.torbanned);
     $("#cs-block_anonymous_users").prop("checked", CHANNEL.opts.block_anonymous_users);
+    $("#cs-allow_anon_chat").prop("checked", CHANNEL.opts.allow_anon_chat);
     $("#cs-allow_ascii_control").prop("checked", CHANNEL.opts.allow_ascii_control);
     $("#cs-playlist_max_per_user").val(CHANNEL.opts.playlist_max_per_user || 0);
     $("#cs-playlist_max_duration_per_user").val(formatTime(CHANNEL.opts.playlist_max_duration_per_user));
