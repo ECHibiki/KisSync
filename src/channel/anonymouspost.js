@@ -104,9 +104,8 @@ AnonymousPost.prototype = Object.create(ChannelModule.prototype);
 AnonymousPost.prototype.onUserPreJoin = function (user, data, cb) {
     const opts = this.channel.modules.options;
     var anonymousPosting = opts.get("allow_anon_chat");
-	if(anonymousPosting && user.isAnonymous){
+	if(anonymousPosting && user.isAnonymous()){
 		user.guestLogin("Anonymous-" + makeIPHash(user.realip) +"");
-		//user.guestLogin("Anonymous");
 		cb(null, ChannelModule.PASSTHROUGH);
 	}
 	else{
